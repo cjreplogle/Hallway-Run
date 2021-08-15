@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Game Template</title>
+    <!- This next line refrences the library of game functions I've written to help with game development->
+    <script type="text/javascript" src="gamefunctions_V4_0.js" ></script>
+    <style>* { padding: 0; margin: 0; } canvas { background: #eee; display: block; margin: 0 auto; }</style>
+</head>
+<body>
+    <canvas id="myCanvas" width="1024" height="1000" oncontextmenu="return false;" ></canvas>
+    <text id="debug"></text>
+<script>
+    //sources:
+    //
+    // gamefunctions_V4_0
+    // Made by my teacher, Mr, Thomas. Intended to ease and reduce the repetition and slow parts of creating a game by acting as a base framework.
+    //
+    // LOSS.wav, SWAP_LANE.wav
+    // Sound Effects from Super Mario Bros sped up/slown down and with changed pitch
+    //
+    // RUNNING.wav
+    // Sound effect taken from Mary Smyth, pitch modified and speed modified.
+    //
+    // All other pixel art, etc. used is created by me in piskelapp.com and the software paint.net. All pixel characters had base model from Pokemon Red and Blue but this was heavily modified for each spritesheet.
+    //
+    //**********************************************************************************************************************    
+    //******************************************** Other Game Functions ****************************************************
+    //**********************************************************************************************************************   
+    function keyDownHandler(e) {
+          myKeys.processDownKey(e);
+    }
+    function keyUpHandler(e) {
+        myKeys.processUpKey(e);
+    }
+//*** the mouse handlers keep track of both WHERE the mouse is at all
+//***  times AND if any of the buttons is currenly pressed or not
+    function mouseMoveHandler(e) {
+        myKeys.processMouseMove(e);
+    }
+    function mouseUpHandler(e) {
+        myKeys.processMouseUp(e);
+    }
+    function mouseDownHandler(e) {
+        myKeys.processMouseDown(e);
+    }
+    //This makes a sound effect for walking every 73 game iterations (73 because that gives the most similar effect to a loop.. Number is length of sound file in game iterations.
+    function walkNoise(val) {
+        if (val % 73 == 0) {
+            createAudio(game.soundDir +'RUNNING.wav');
+        }
+    }
+    
+    // This loops through all the terrain images and prints them out
+    // This is an example of grouping all like "objects" in an array
+    // Not only does it make drawing each object a one command process
+    // but we can di similar checks - such as collision against all of
+    // these items by loooping as well
+    
+    function drawObstacles(){
+        for(i=0; i < ObstacleArray.length; i++){
+            if(game.gameIterator%100==0){
+                ObstacleArray[i].currentFrame = spawnObstacleDirection();
+            }
+            if (ObstacleArray[i].y < -ObstacleArray[i].useHeight){
+                ObstacleArray[i].y = canvas.height;
+            }
+            ObstacleArray[i].draw();
+        }
+    }
+
+    ///*****ALGORITHM*****///
+    
+    function spawnObstacleLane(){
+        tmpX = Math.random()*4;
+        tmpX = Math.floor(tmpX);
+        tmpX = tmpX * 192;
+        tmpX = tmpX + 150;
+        return tmpX;
+    }
+    
+    function spawnObstacleHeight(){
+        tmpY = Math.random()*10;
+        tmpY = Math.floor(tmpY);
+        tmpY = tmpY * 256;
+        tmpY = tmpY + 1024;
+        return tmpY;
+    }
+    
+    function spawnObstacleDirection(){
+        tmpA = Math.random()*3;
+        tmpA = Math.floor(tmpA);
+        console.log(tmpA);
+        return tmpA;
+    }
+    
+    ///**********///
+    
+    //**********************************************************************************************************************    
+    //************************************************ DRAW FUNCTION *******************************************************
+    //**********************************************************************************************************************   
+      
+    function draw() {         
+     
+    //**********************************************************************************************************************    
+    //***************************************************** MOVEMENT *******************************************************
+    //**********************************************************************************************************************   
+        
+        if (myKeys.rightArrow && game.gameIterator % 16 ==0) {
+            //this plays sound when swapping lanes
+            createAudio(game.soundDir + 'SWAP_LANE.wav')
+            
+            //this checks for collision on the right side when your character moves to the right
+            for(i=0; i < ObstacleArray.length; i++){
+                player.checkRightCollision(ObstacleArray[i]);
+                if (player.collision){
+                    break;
+                }
+            }
+            
+            if (!player.collision) {
+            player.x = player.x + 192;
+            // this is what actually moves the player when a key is pressed
+            }
+            
+            // Makes player stay within hall and not loop around/go out of bounds.
+            if (player.x> 727) {
+            player.x = 726;
+            }
+            
+            player.currentDir = 0;
+            player.advanceFrame();
+            walkNoise(game.gameIterator);
+        }
+
+ 
+        if (myKeys.leftArrow && game.gameIterator % 16 ==0) {
+            
+            createAudio(game.soundDir + 'SWAP_LANE.wav')
+            
+            for(i=0; i < ObstacleArray.length; i++){
+                player.checkLeftCollision(ObstacleArray[i]);
+                if (player.collision){
+                    break;
+                }
+            }
+            
+            if (!player.collision) {
+            player.x = player.x  - 192;
+            player.currentDir  = 1;
+            player.advanceFrame();
+            walkNoise(game.gameIterator);
+            }
+        }
+        
+        for(i=0; i < ObstacleArray.length; i++){
+                player.checkRightCollision(ObstacleArray[i]);
+                if (player.collision){
+                    break;
+                }
+            }
+       
+        
+        if (!player.collision){
+                player.currentDir = 3;
+                walkNoise(game.gameIterator);
+            }
+            
+        
+        if (player.collision){
+            // little animation for falling
+            player.currentDir = 5
+            if(player.y< 65) {
+                player.y = player.y + 64
+            }
+            if(player.x>500) {
+                player.x = player.x - 64
+            }
+            if(player.x<500) {
+                player.x = player.x + 64
+            }
+            createAudio(game.soundDir + 'LOSS.wav')
+            alert("You got detention! Use control+r or refresh the page to restart!")
+            //game over sound + prompt
+            //Sprite(512,768,128,128,196,196, imgLoss) maybe in the future
+            }
+        
+            
+    //**********************************************************************************************************************    
+    //***************************************************** GAME LOGIC *****************************************************
+    //**********************************************************************************************************************    
+
+player.y+=2
+           
+if(game.gameIterator % 10 == 0){
+    player.advanceFrame();
+    }
+           
+if(player.x >= 919) {
+    player.x == 918
+    }
+        
+if (player.x <149) {
+     player.x  = 150
+    }
+
+if (player.y == ObstacleArray.y) {
+    player.collision;
+    }
+        
+    //*******************************************************************
+    //**********************Now Draw everything *************************
+    //*******************************************************************
+    
+    //this clears screen to prepare for redraw   
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    //this draws the background first
+    bg.draw();
+    
+    //Obstacles are drawn next
+    drawObstacles();
+    
+    //drawing some text on the screen just for aesthetic purposes, score is number of frames the game has ran / 60 which gives the time in seconds the game has ran
+    
+        
+    score.draw("Hallway Run! - Time: " + Math.floor(game.gameIterator / 60) + " seconds");  
+           
+    //player is a sprint in a 4x4 grid - each image is 128x128
+    //I am rescaling it down to 32x32
+  
+    player.draw();        
+
+    // This controls when the game reprints and loads frames. Don't mess with this.
+    game.gameIterate();    
+    game.debugAppend(game.gameIterator);
+    game.debug();
+    requestAnimationFrame(draw);    
+}
+
+//**************************************************************************************
+// *********************** Begin Main portion of program *******************************
+//**************************************************************************************
+
+
+
+    //these bad boys help reference certain images
+    
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+
+    
+    //event listeners look for and try to detect keyboard clicks and inputs, which helps with my movement system
+
+    document.addEventListener("keydown", keyDownHandler, false);
+    document.addEventListener("keyup", keyUpHandler, false);
+    document.addEventListener("mousemove", mouseMoveHandler, false);
+    document.addEventListener("mousedown", mouseDownHandler, false);
+    document.addEventListener("mouseup", mouseUpHandler, false);
+    
+    
+    // Create the game Object - Always declared as it has important properies other areas depend upon
+    var game = new GameMaster();
+    // this just scrolls the background, also is at the same speed as the player automatically moves down
+    game.bgDY=-2;
+    // Object that holds all keypress and release data   
+    var myKeys = new KeysPresses(); 
+    
+    
+    //Score is an object that displays text on the screen - in
+    //this case the Score (frames you have managed to survive)
+    //I'm also setting some of its properties so it prints where I want
+    //and looking the way I want it to look
+    var score = new GameText();
+    score.font = "56px brittanic";
+    score.fillStyle = "Black";
+    score.x = 75;
+    score.y = 985;
+    score.alpha = 0.75;
+    score.draw
+
+    
+    //**********************************************************************************************************************    
+    //*********************************************** IMAGE LOADING *******************************************************
+    //**********************************************************************************************************************  
+    
+    
+    //***Loading player falling sprite
+    var imgPlayerCollision = new Image();
+    imgPlayerCollision.src = game.imageDir + "fall.png";
+    
+    //picture that would load if player loses, currently unused
+    var imgLoss = new Image();
+    imgLoss.src = game.imageDir + "loss.png"
+    
+    
+    //*** Loading images of different players/obstatcles
+    var imgBoyBrownHair = new Image();
+    imgBoyBrownHair.src = game.imageDir + "Obstacle_boy_brown.png";
+    
+    var imgGirlBrownHair = new Image();
+    imgGirlBrownHair.src = game.imageDir + "Obstacle_girl_brown.png";
+    
+    var imgGirlBlondeHair = new Image();
+    imgGirlBlondeHair.src = game.imageDir + "Obstacle_girl_blonde.png";
+    
+    var imgBoyBlondeHair = new Image();
+    imgBoyBlondeHair.src = game.imageDir + "Obstacle_boy_blonde.png";
+ 
+    var background = new Image();
+    background.src = game.imageDir + "hall.png";
+    
+    var imgGirlBlackHair = new Image();
+    imgGirlBlackHair.src = game.imageDir + "Obstacle_girl_black.png"
+    
+    var imgBoyBlackHair = new Image();
+    imgBoyBlackHair.src = game.imageDir + "Obstacle_boy_black.png"
+    
+    // this is the background
+    var bg = new ScrollingBackGround(0,0,1024,1024,1024,1024,background);
+
+    //this defines a lot of different values for each unique Obstacle
+    var ObstacleArray= [];
+    ObstacleArray[0] = new SpriteSheet(153,0,192,256,150,200,4,3, imgGirlBrownHair);
+    ObstacleArray[0].x = spawnObstacleLane();
+    ObstacleArray[0].moveWithBackground = true;
+    ObstacleArray[0].y = spawnObstacleHeight();
+        
+    ObstacleArray[1] = new SpriteSheet(153,200,192,256,150,200,4,3, imgBoyBlondeHair);
+    ObstacleArray[1].x = spawnObstacleLane();
+    ObstacleArray[1].moveWithBackground = true;
+    ObstacleArray[1].y = spawnObstacleHeight();
+        
+    ObstacleArray[2] = new SpriteSheet(153,400,192,256,150,200,4,3, imgGirlBlondeHair);
+    ObstacleArray[2].x = spawnObstacleLane();
+    ObstacleArray[2].moveWithBackground = true;
+    ObstacleArray[2].y = spawnObstacleHeight();
+        
+    ObstacleArray[3] = new SpriteSheet(153,600,192,256,150,200,4,3, imgGirlBlackHair);
+    ObstacleArray[3].x = spawnObstacleLane();
+    ObstacleArray[3].moveWithBackground = true;
+    ObstacleArray[3].y = spawnObstacleHeight();
+        
+    ObstacleArray[4] = new SpriteSheet(153,800,192,256,150,200,4,3, imgBoyBlackHair);
+    ObstacleArray[4].x = spawnObstacleLane();
+    ObstacleArray[4].moveWithBackground = true;
+    ObstacleArray[4].y = spawnObstacleHeight();
+        
+    ObstacleArray[5] = new SpriteSheet(345,0,192,256,150,200,4,3, imgBoyBrownHair);
+    ObstacleArray[5].x = spawnObstacleLane();
+    ObstacleArray[5].moveWithBackground = true;
+    ObstacleArray[5].y = spawnObstacleHeight();
+    
+    //With each Obstacle defined, this sets universal properties for all of the Obstacles
+    
+    ///*****ABSTRACTION*****///
+    for ( i = 0; i < ObstacleArray.length; i++){
+        ObstacleArray[i].alpha = 1;
+        ObstacleArray[i].moveWithBackground = true;
+        ObstacleArray[i].currentDir = 4;
+        ObstacleArray[i].currentFrame = spawnObstacleDirection();  
+    }
+    ///***********///
+    
+
+    
+    
+    
+    
+    
+        // **** END ****
+        
+    //****************************** Final Image Load Section *********
+    // Pretty much this just loads all the images together since they are what actually take the longest to load.
+    //** **********************************************************************
+    var imgplayer = new Image();
+    imgplayer.src = game.imageDir + "player.png";
+    imgplayer.onload = function() {
+    player = new SpriteSheet (153,0,192,256,150,200,3,3,imgplayer);
+
+//unused lives variable, maybe in the future
+lives = 3
+
+        draw();
+    };
+
+
+</script>
+
+</body>
+</html>
